@@ -1,0 +1,20 @@
+models:
+  oracle: "deepseek-chat"
+  judge: "deepseek-chat"
+  solvers:
+    - "deepseek-chat"
+
+solvers:
+  - name: "naive"
+  - name: "hypothesis"
+    params:
+      num_hypotheses: 5
+  - name: "infogain"
+    params:
+      num_candidates: 5
+
+experiment:
+  max_questions: 30
+  temperature: 0.7
+  puzzles_per_run: 50
+

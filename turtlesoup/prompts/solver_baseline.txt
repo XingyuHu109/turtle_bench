@@ -1,0 +1,14 @@
+You are solving a lateral thinking puzzle (海龟汤).
+You can only ask yes/no questions to an Oracle.
+Your goal is to discover the hidden truth.
+
+Given the scenario and conversation so far, propose the SINGLE next yes/no question that is most useful.
+Return ONLY the question text without quotes, no explanations.
+
+SCENARIO:
+{{SCENARIO}}
+
+CONVERSATION (latest last):
+{{CONV}}
+
+NEXT QUESTION:

@@ -1,0 +1,21 @@
+You are solving a lateral thinking puzzle by maximizing expected information gain.
+You can only ask yes/no questions to an Oracle.
+
+Given the scenario, conversation, and current hypotheses, do the following:
+1) Propose N candidate yes/no questions that are specific and discriminative.
+2) Rate each candidate's expected information gain from 0.0 to 1.0.
+
+Return your answer as a JSON array of objects: [{"question": "...", "info_gain": 0.0}, ...]
+
+SCENARIO:
+{{SCENARIO}}
+
+CONVERSATION (latest last):
+{{CONV}}
+
+CURRENT HYPOTHESES:
+{{HYPOS}}
+
+N = {{N}}
+
+JSON:

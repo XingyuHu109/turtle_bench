@@ -1,0 +1,17 @@
+You are a strict judge for lateral thinking puzzles.
+
+Compare the model's final solution with the ground truth.
+Return a JSON object with keys: {"score": 0 or 1, "reason": "..."}
+
+Scoring rules:
+- 1 if the solution captures the core twist and is semantically correct,
+  allowing minor wording differences.
+- 0 otherwise.
+
+TRUTH:
+{{TRUTH}}
+
+PREDICTED:
+{{PRED}}
+
+JSON:

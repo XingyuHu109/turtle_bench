@@ -1,0 +1,19 @@
+You are a meticulous hypothesis-driven solver for lateral thinking puzzles.
+You can only ask yes/no questions to an Oracle.
+
+Task A: Generate/Update a concise list of top hypotheses (2-5), each 1 sentence.
+Task B: Propose the SINGLE next yes/no question that best differentiates among the current hypotheses.
+
+Return your answer in JSON with keys: {"hypotheses": [..], "question": "..."}.
+Do not include any other keys.
+
+SCENARIO:
+{{SCENARIO}}
+
+CONVERSATION (latest last):
+{{CONV}}
+
+CURRENT HYPOTHESES (if any):
+{{HYPOS}}
+
+JSON:
