@@ -9,7 +9,7 @@ VENV_DIR="${ROOT_DIR}/.venv"
 
 PROVIDER="lmstudio"   # default to local LM Studio for testing
 SOLVER="hypothesis"
-SPLIT="dev"            # dev|test|train
+SPLIT="test"            # dev|test|train
 MAX_Q=30
 
 # 0) Source environment files early so keys are available to checks below
@@ -107,8 +107,31 @@ if [[ ! -f "$SPLIT_PATH" ]]; then
   exit 1
 fi
 
-OUT_DIR="$ROOT_DIR/results/${SOLVER}_${PROVIDER}"
+RUN_TS="$(date +%Y%m%d_%H%M%S)"
+OUT_DIR="$ROOT_DIR/results/${SOLVER}_${PROVIDER}/${RUN_TS}"
 mkdir -p "$OUT_DIR"
+
+# Export metadata for Python snippets
+export PROVIDER SOLVER MODEL_NAME LLM_API_BASE SPLIT_PATH MAX_Q OUT_DIR
+
+echo "[TurtleSoup] Writing run metadata to $OUT_DIR/info.json"
+python - << PY
+import json, os, time, sys
+out_path = os.environ.get('OUT_DIR')
+info = {
+  'provider': os.environ.get('PROVIDER'),
+  'solver': os.environ.get('SOLVER'),
+  'model': os.environ.get('MODEL_NAME'),
+  'oracle_model': os.environ.get('MODEL_NAME'),
+  'llm_api_base': os.environ.get('LLM_API_BASE'),
+  'split_file': os.environ.get('SPLIT_PATH'),
+  'max_questions': int(os.environ.get('MAX_Q', '30')),
+  'start_time': time.strftime('%Y-%m-%dT%H:%M:%S', time.gmtime()),
+}
+os.makedirs(out_path, exist_ok=True)
+with open(os.path.join(out_path, 'info.json'), 'w', encoding='utf-8') as f:
+    json.dump(info, f, ensure_ascii=False, indent=2)
+PY
 
 echo "[TurtleSoup] Running solver=$SOLVER on $SPLIT_PATH -> $OUT_DIR"
 python "$ROOT_DIR/turtlesoup/scripts/run_solver.py" \
@@ -125,5 +148,20 @@ python "$ROOT_DIR/turtlesoup/scripts/evaluate.py" \
   --puzzles "$SPLIT_PATH" \
   --output "$OUT_DIR/metrics.json" \
   --judge_model "$MODEL_NAME"
+
+python - << PY
+import json, os, time
+out_path = os.environ.get('OUT_DIR')
+meta_path = os.path.join(out_path, 'info.json')
+try:
+    with open(meta_path, 'r', encoding='utf-8') as f:
+        info = json.load(f)
+except Exception:
+    info = {}
+info['end_time'] = time.strftime('%Y-%m-%dT%H:%M:%S', time.gmtime())
+info['metrics_file'] = os.path.join(out_path, 'metrics.json')
+with open(meta_path, 'w', encoding='utf-8') as f:
+    json.dump(info, f, ensure_ascii=False, indent=2)
+PY
 
 echo "[TurtleSoup] Done. Metrics: $OUT_DIR/metrics.json"

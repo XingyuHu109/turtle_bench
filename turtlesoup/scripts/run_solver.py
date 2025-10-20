@@ -10,6 +10,7 @@ sys.path.append(str(Path(__file__).resolve().parents[2]))
 from turtlesoup.src.utils import load_puzzles, save_conversation, setup_logging
 from turtlesoup.src.oracle import Oracle
 from turtlesoup.src.solvers import create_solver
+from turtlesoup.src.evaluator import Evaluator
 from turtlesoup.src.ui import get_console
 
 
@@ -32,6 +33,7 @@ def main():
 
     puzzles = load_puzzles(args.puzzles)
     oracle = Oracle(args.oracle_model)
+    evaluator = Evaluator(args.model)
 
     solver_kwargs = {"num_candidates": args.num_candidates} if args.solver == "infogain" else {}
     solver = create_solver(args.solver, args.model, **solver_kwargs)
@@ -59,7 +61,14 @@ def main():
 
         ui.progress_start(args.max_questions, description=f"{pid} Qs")
         final_solution = solver.solve(scenario, truth, oracle, max_questions=args.max_questions, on_turn=on_turn)
+        if solver.finalized and solver.finalize_turn is not None:
+            ui.info(f"Final answer submitted at Q{solver.finalize_turn}; no further rounds.")
+        else:
+            ui.warn("Reached max questions; submitting best-guess solution.")
         ui.progress_stop()
+        score, reason = evaluator.judge_solution(truth, final_solution)
+        ui.box("Judged", f"score={score}\nreason={reason[:200]}")
+
         conv = {
             "puzzle_id": pid,
             "model": args.model,
@@ -67,6 +76,10 @@ def main():
             "conversation": solver.conversation,
             "final_solution": final_solution,
             "num_questions": len([t for t in solver.conversation if t.get("type") == "question"]),
+            "finalized": bool(solver.finalized),
+            "finalize_turn": solver.finalize_turn,
+            "judge_score": int(score),
+            "judge_reasoning": reason,
             "timestamp": datetime.utcnow().isoformat(),
         }
         save_conversation(conv, args.output)

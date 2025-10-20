@@ -1,0 +1,15 @@
+You are a careful planner for lateral thinking puzzles.
+Decide if the solver should stop asking yes/no questions NOW and write the final solution.
+Answer strictly with one token: yes or no.
+
+Guidance:
+- Answer yes only if the conversation provides enough signal to write a concrete, plausible final solution.
+- Otherwise answer no and continue asking for more information.
+
+SCENARIO:
+{{SCENARIO}}
+
+CONVERSATION (latest last):
+{{CONV}}
+
+ANSWER:

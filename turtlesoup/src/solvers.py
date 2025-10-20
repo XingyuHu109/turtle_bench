@@ -22,12 +22,26 @@ class BaseSolver:
         self.model = create_model(model_name)
         self.prompts_dir = Path(prompts_dir or Path(__file__).resolve().parent.parent / "prompts")
         self.conversation: List[Dict[str, Any]] = []
+        self.finalize_turn: Optional[int] = None
+        self.finalized: bool = False
 
         # Prompts
         self._baseline_prompt = (self.prompts_dir / "solver_baseline.txt").read_text(encoding="utf-8")
+        # Decide whether to finalize now
+        stop_path = self.prompts_dir / "solver_stop.txt"
+        if stop_path.exists():
+            self._stop_prompt = stop_path.read_text(encoding="utf-8")
+        else:
+            self._stop_prompt = (
+                "You judge if we should stop asking yes/no questions and write the final solution now.\n"
+                "Return exactly one token: yes or no.\n\n"
+                "SCENARIO:\n{{SCENARIO}}\n\nCONVERSATION:\n{{CONV}}\n\nANSWER:"
+            )
 
     def reset(self) -> None:
         self.conversation = []
+        self.finalize_turn = None
+        self.finalized = False
 
     def generate_question(self, scenario: str) -> str:
         """Generate next question. Override in subclasses for advanced behavior."""
@@ -50,6 +64,16 @@ class BaseSolver:
         )
         return self.model.generate(prompt=prompt, temperature=0.2).strip()
 
+    def should_finalize(self, scenario: str) -> bool:
+        conv_text = _format_conversation(self.conversation)
+        prompt = (
+            self._stop_prompt
+            .replace("{{SCENARIO}}", scenario.strip())
+            .replace("{{CONV}}", conv_text)
+        )
+        out = self.model.generate(prompt=prompt, temperature=0.0).strip().lower()
+        return out.startswith("yes")
+
     def solve(self, scenario: str, truth: str, oracle, max_questions: int = 30, on_turn=None) -> str:
         """Main solving loop. Returns final solution."""
         self.reset()
@@ -65,6 +89,11 @@ class BaseSolver:
                     pass
             # Optional early stop if question indicates finalization
             if q.strip().lower() in {"is that enough to solve?", "is the solution clear now?"}:
+                break
+            # Model-driven early stopping decision
+            if self.should_finalize(scenario):
+                self.finalized = True
+                self.finalize_turn = i
                 break
         return self.propose_solution(scenario)
 
