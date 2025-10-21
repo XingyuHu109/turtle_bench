@@ -1,3 +1,5 @@
+TurtleSoup: a minimal benchmark for evaluating LLMs' yes/no question-asking and lateral-thinking on 海龟汤 puzzles.
+
 ```mermaid
 sequenceDiagram
     autonumber
